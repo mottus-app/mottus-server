@@ -1,9 +1,21 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
-  "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
+  "rootDir": "..",
+  "testMatch": ["**/*.e2e-spec.ts"],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/src/",
+    ".entity.ts$",
+    "/src/main.ts"
+  ],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "coverageReporters": ["json", "text", "lcov"],
+  "coverageDirectory": "coverage/e2e",
+  "collectCoverage": true,
+  "collectCoverageFrom": ["src/**"],
+  "coveragePathIgnorePatterns": [".module.ts$", ".spec.ts$", ".entity.ts$"],
+  "testEnvironment": "<rootDir>/prisma/test-environment.js",
+  "setupFilesAfterEnv": ["<rootDir>/setupTests.ts"]
 }
