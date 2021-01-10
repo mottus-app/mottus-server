@@ -1,4 +1,7 @@
 {
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/src/$1"
+  },
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": "..",
   "testMatch": ["**/*.e2e-spec.ts"],
@@ -6,7 +9,8 @@
     "/node_modules/",
     "/src/",
     ".entity.ts$",
-    "/src/main.ts"
+    "/src/main.ts",
+    ".dto.ts$"
   ],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"

@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import * as session from 'express-session';
 
 import { INestApplication } from '@nestjs/common';

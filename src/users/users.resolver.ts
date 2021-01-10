@@ -1,27 +1,25 @@
-import {
-  Args,
-  Context,
-  Field,
-  InputType,
-  Mutation,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GqlContext } from 'src/utils/gqlContext';
-import { SignupDto } from './dto/signup.dto';
+import {
+  returnString,
+  returnUserResponse,
+  returnBoolean,
+} from 'src/utils/utilDecorators';
 import { LogInDto } from './dto/login.dto';
-import { User, UserResponse } from './entity/user.entity';
+import { SignupDto } from './dto/signup.dto';
+import { User } from './entity/user.entity';
 import { UsersService } from './users.service';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
-  @Query(() => UserResponse)
+
+  @Query(returnUserResponse)
   me(@Context() context: GqlContext) {
     return this.usersService.getMe(context);
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(returnUserResponse)
   signup(
     @Args('signupOptions') signupDto: SignupDto,
     @Context() context: GqlContext,
@@ -29,7 +27,7 @@ export class UsersResolver {
     return this.usersService.signup(signupDto, context);
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(returnUserResponse)
   login(
     @Args('loginOptions') loginDto: LogInDto,
     @Context() context: GqlContext,
@@ -37,7 +35,7 @@ export class UsersResolver {
     return this.usersService.login(loginDto, context);
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(returnBoolean)
   logout(@Context() context: GqlContext) {
     return this.usersService.logout(context);
   }

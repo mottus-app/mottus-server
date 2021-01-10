@@ -83,6 +83,9 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    },
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
@@ -95,6 +98,7 @@
       ".module.ts$",
       ".spec.ts$",
       ".entity.ts$",
+      ".dto.ts$",
       "./src/main.ts"
     ],
     "coverageDirectory": "../coverage/unit",
