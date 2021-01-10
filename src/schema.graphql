@@ -2,14 +2,50 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type FieldError {
+  field: String!
+  message: String!
+}
+
+type User {
+  id: String!
+  createdAt: String!
+  updatedAt: String!
+  name: String!
+  profilePic: String!
+  email: String!
+  role: Role!
+}
+
+"""The possible roles of a user"""
+enum Role {
+  ADVERTISER
+  USER
+}
+
+type UserResponse {
+  errors: [FieldError!]
+  user: User
+}
+
 type Query {
-  hello: String!
+  me: UserResponse!
 }
 
 type Mutation {
-  createUser(createUserOptions: CreateUserDto!): Boolean!
+  signup(signupOptions: SignupDto!): UserResponse!
+  login(loginOptions: LogInDto!): UserResponse!
+  logout: Boolean!
 }
 
-input CreateUserDto {
-  username: String!
+input SignupDto {
+  name: String!
+  password: String!
+  email: String!
+  profilePic: String
+}
+
+input LogInDto {
+  password: String!
+  email: String!
 }

@@ -25,6 +25,13 @@ model Organization {
   campaign   Campaign[]
 }
 
+model Session {
+  id      String   @id
+  sid     String   @unique
+  data    String
+  expires DateTime
+}
+
 model User {
   id           String         @id @default(uuid())
   createdAt    DateTime       @default(now())
