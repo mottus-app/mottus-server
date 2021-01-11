@@ -4,7 +4,7 @@ const NodeEnvironment = require('jest-environment-node');
 const { nanoid } = require('nanoid');
 const { PrismaClient } = require('@prisma/client');
 const exec = util.promisify(require('child_process').exec);
-return console.log(process.env);
+const { DB_USERNAME, DB_PASSWORD } = process.env;
 
 class PrismaTestEnvironment extends NodeEnvironment {
   constructor(config) {
@@ -12,7 +12,7 @@ class PrismaTestEnvironment extends NodeEnvironment {
 
     // Generate a unique sqlite identifier for this test context
     this.schema = nanoid();
-    this.url = `postgresql://andredealbuquerque:andredealbuquerque@localhost:5432/prisma?connection_limit=1&schema=${this.schema}`;
+    this.url = `postgresql://${DB_USERNAME}:${DB_PASSWORD}@localhost:5432/prisma?connection_limit=1&schema=${this.schema}`;
     process.env.DB_URL = this.url;
     this.global.process.env.DB_URL = this.url;
     this.client = new PrismaClient();
