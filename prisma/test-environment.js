@@ -1,46 +1,29 @@
-const NodeEnvironment = require('jest-environment-node');
-const randomString = require('randomstring');
 const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const NodeEnvironment = require('jest-environment-node');
+const { nanoid } = require('nanoid');
 const { PrismaClient } = require('@prisma/client');
+const exec = util.promisify(require('child_process').exec);
 
 class PrismaTestEnvironment extends NodeEnvironment {
   constructor(config) {
     super(config);
 
-    // Generate a unique schema identifier for this test context
-    this.schema = `test_${randomString.generate({
-      length: 16,
-      charset: 'alphanumeric',
-      capitalization: 'lowercase',
-    })}`;
-
-    // Generate the pg connection string for the test schema
-    this.databaseUrl = 'postgres://postgres:password@localhost:5432/testing';
-    process.env.DB_URL = this.databaseUrl;
-    this.global.process.env.DB_URL = this.databaseUrl;
+    // Generate a unique sqlite identifier for this test context
+    this.schema = nanoid();
+    this.url = `postgresql://andredealbuquerque:andredealbuquerque@localhost:5432/prisma?connection_limit=1&schema=${this.schema}`;
+    process.env.DB_URL = this.url;
+    this.global.process.env.DB_URL = this.url;
     this.client = new PrismaClient();
   }
 
   async setup() {
-    await this.client.$executeRaw(
-      `create schema if not exists "${this.schema}"`,
-    );
-
-    // Set the required environment variable to contain the connection string
-    // to our database test schema
-    const url = `${this.databaseUrl}?schema=${this.schema}`;
-    process.env.DB_URL = url;
-    this.global.process.env.DB_URL = url;
-
-    //  TODO CHECK IF WE NEED TO SEED SOMETHING
-    //  await exec('npm run seed');
+    // Run the migrations to ensure our schema has the required structure
+    await exec(`yarn migrate:prod`);
 
     return super.setup();
   }
 
   async teardown() {
-    // Drop the schema after the tests have completed
     await this.client.$executeRaw(
       `drop schema if exists "${this.schema}" cascade`,
     );

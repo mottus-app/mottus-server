@@ -14,12 +14,12 @@ import { PrismaClient } from '@prisma/client';
 //   res: Response;
 // };
 export interface MySession extends Express.Session {
-  userId: string;
+  userId?: string;
   // [key?: string]: any;
 }
 // here we have a request with the session overrriden by our own session interface
 export interface CustomRequest extends Request {
-  session: MySession;
+  session?: MySession;
   // session: Session & Partial<SessionData> & { userId: string };
 }
 

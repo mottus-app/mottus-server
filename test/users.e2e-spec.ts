@@ -33,7 +33,7 @@ describe('User Module (e2e)', () => {
     const publicTest = (query: string) => baseTest().send({ query });
     it('works', async () => {
       const data = await publicTest(`query {hello}`).expect(200);
-      console.log('data:', data.body);
+      // console.log('data:', data.body);
     });
 
     it('works to get user, when no session', async () => {
@@ -43,6 +43,29 @@ describe('User Module (e2e)', () => {
       expect(body.data.me.errors).toBeNull();
       expect(body.data.me.user).toBeNull();
     });
+  });
+
+  it('logs in', async () => {
+    const { headers, body } = await publicTest(`mutation {
+      signup(
+        signupOptions: {
+          name: "andre"
+          password: "Password1234"
+          email: "email@example1.com"
+        }
+      ) {
+        errors {
+          field
+          message
+        }
+        user {
+          id
+        }
+      }
+    }
+    `);
+    console.log('headers', headers);
+    console.log(JSON.stringify(body, null, 4));
   });
 });
 // const GRAPHQL_ENDPOINT = '/graphql';
