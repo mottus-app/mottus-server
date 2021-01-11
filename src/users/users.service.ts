@@ -11,7 +11,7 @@ import { FieldError } from 'src/utils/base.response';
 @Injectable()
 export class UsersService {
   async getMe({ req, prisma, res }: GqlContext): Promise<UserResponse> {
-    if (!req.session.userId) {
+    if (!req.session?.userId) {
       return {
         user: null,
       };

@@ -35,6 +35,14 @@ describe('User Module (e2e)', () => {
       const data = await publicTest(`query {hello}`).expect(200);
       console.log('data:', data.body);
     });
+
+    it('works to get user, when no session', async () => {
+      const { body } = await publicTest(
+        `query {me {errors {field message} user {id}}}`,
+      );
+      expect(body.data.me.errors).toBeNull();
+      expect(body.data.me.user).toBeNull();
+    });
   });
 });
 // const GRAPHQL_ENDPOINT = '/graphql';
