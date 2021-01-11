@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersResolver } from './users.resolver';
 import { createMock } from '@golevelup/ts-jest';
 import { UsersService } from './users.service';
-import { GqlContext, CustomRequest } from 'src/utils/gqlContext';
+import { GqlContext } from 'src/utils/gqlContext';
 import { COOKIE_NAME } from 'src/utils/cookieName';
 import { User } from 'src/users/entity/user.entity';
+import { SignupDto } from './dto/signup.dto';
 
+// we pass the User resolver for testing
 let resolver: UsersResolver;
 beforeEach(async () => {
   const module: TestingModule = await Test.createTestingModule({
@@ -20,23 +22,15 @@ describe('UsersResolver', () => {
   });
 
   describe('Get User', () => {
-    const context = createMock<GqlContext>({
-      res: {
-        clearCookie: jest.fn(),
-      },
-      prisma: {
-        user: {
-          findUnique: () => null,
-        },
-      },
-      req: {
-        session: {
-          userId: null,
-        },
-      },
-    });
     describe('null states', () => {
       it('sends null with no userId', async () => {
+        const context = createMock<GqlContext>({
+          req: {
+            session: {
+              userId: null,
+            },
+          },
+        });
         const callResolver = await resolver.me(context);
         expect(callResolver.user).toBeNull();
       });
@@ -66,9 +60,6 @@ describe('UsersResolver', () => {
 
       it('when error', async () => {
         const ctx = createMock<GqlContext>({
-          res: {
-            clearCookie: jest.fn(),
-          },
           req: {
             session: {
               userId: '123' as any,
@@ -97,10 +88,6 @@ describe('UsersResolver', () => {
             message: 'please try again later',
           },
         ]);
-        // expect(context.prisma.user.findUnique).toHaveBeenCalled();
-        // expect(context.res.clearCookie).toHaveBeenCalled();
-        // expect(context.res.clearCookie).toHaveBeenCalledWith(COOKIE_NAME);
-        // expect(callResolver.user).toBeNull();
       });
     });
 
@@ -117,9 +104,6 @@ describe('UsersResolver', () => {
           updatedAt: new Date(),
         };
         const ctx = createMock<GqlContext>({
-          res: {
-            clearCookie: jest.fn(),
-          },
           req: {
             session: {
               userId: '123' as any,
@@ -134,6 +118,285 @@ describe('UsersResolver', () => {
         const calledResolver = await resolver.me(ctx);
         expect(calledResolver.user).toBeDefined();
         expect(calledResolver.user.email).toBe(mockedUser.email);
+      });
+    });
+  });
+
+  describe('Signup', () => {
+    describe('error states', () => {
+      describe('input validation', () => {
+        // we use this so we can do proper unit testing for each resolver
+        const mockContext = createMock<GqlContext>();
+        const obj = {
+          email: '123',
+          name: '123',
+          password: '123',
+        };
+        it('name fails', async () => {
+          //here we call the resolver it self
+          const callResolver = await resolver.signup(obj, mockContext);
+          expect(callResolver.user).toBeUndefined();
+          expect(callResolver.errors).toBeDefined();
+          expect(callResolver.errors.length).toBeGreaterThan(1);
+          const isUsernameError = callResolver.errors.find(
+            (el) => el.field === 'name',
+          );
+          expect(isUsernameError).toBeDefined();
+          const callResolverWithArr = await resolver.signup(
+            {
+              // @ts-expect-error
+              name: [],
+            },
+            mockContext,
+          );
+          const stillUsername = callResolverWithArr.errors.find(
+            (el) => el.field === 'name',
+          );
+          expect(stillUsername).toBeDefined();
+        });
+        it('username works', async () => {
+          const callResolver = await resolver.signup(
+            {
+              ...obj,
+              name:
+                'Alonso mario garcia minuar suarez de la conna madre que te pario',
+            },
+            mockContext,
+          );
+
+          const notUsername = callResolver.errors.find(
+            (e) => e.field === 'name',
+          );
+          expect(notUsername).not.toBeDefined();
+        });
+
+        it('email fails', async () => {
+          const callResolver = await resolver.signup(obj, mockContext);
+          expect(callResolver.user).toBeUndefined();
+          expect(callResolver.errors).toBeDefined();
+          expect(callResolver.errors.length).toBeGreaterThan(1);
+          const isEmailError = callResolver.errors.find(
+            (el) => el.field === 'email',
+          );
+          expect(isEmailError).toBeDefined();
+          const callResolverWithArr = await resolver.signup(
+            {
+              // @ts-expect-error
+              email: [],
+            },
+            mockContext,
+          );
+          const stillEmail = callResolverWithArr.errors.find(
+            (el) => el.field === 'email',
+          );
+          expect(stillEmail).toBeDefined();
+          const anotherResolver = await resolver.signup(
+            // @ts-expect-error
+            {
+              email: 'yomoma@com',
+            },
+            mockContext,
+          );
+          expect(
+            anotherResolver.errors.find((e) => e.field === 'email'),
+          ).toBeDefined();
+        });
+
+        it('email works', async () => {
+          const callResolver = await resolver.signup(
+            {
+              ...obj,
+              email: 'yomoma@gmail.com',
+            },
+            mockContext,
+          );
+
+          const isEmail = callResolver.errors.find(
+            (el) => el.field === 'email',
+          );
+          expect(isEmail).not.toBeDefined();
+        });
+
+        it('password fails', async () => {
+          const callResolver = await resolver.signup(obj, mockContext);
+          expect(
+            callResolver.errors.find((el) => el.field === 'password'),
+          ).toBeDefined();
+        });
+        it('password works', async () => {
+          const callResolver = await resolver.signup(
+            { ...obj, password: 'Testing12345' },
+            mockContext,
+          );
+          expect(
+            callResolver.errors.find((e) => e.field === 'password'),
+          ).not.toBeDefined();
+        });
+      });
+      describe('creatingUserFail', () => {
+        const validSignup: SignupDto = {
+          email: 'andre@gmail.com',
+          name: 'Andre',
+          password: 'Passwird1234.',
+        };
+        it('non unique email', async () => {
+          const mockContext = createMock<GqlContext>({
+            prisma: {
+              user: {
+                // creating a fake context so when prisma.user.create is called in the resolver it throws and error
+                create: jest
+                  .fn()
+                  .mockRejectedValue(new Error('constraint email')),
+              },
+            },
+          });
+          const callResolver = await resolver.signup(validSignup, mockContext);
+          expect(callResolver.errors).toStrictEqual([
+            { field: 'email', message: 'this email is already taken' },
+          ]);
+
+          expect(callResolver.user).not.toBeDefined();
+        });
+        it('internal server error', async () => {
+          const mockContext = createMock<GqlContext>({
+            prisma: {
+              user: {
+                // creating a fake context so when prisma.user.create is called in the resolver it throws and error
+                create: jest
+                  .fn()
+                  .mockRejectedValue(new Error('oops i did it again')),
+              },
+            },
+          });
+          const callResolver = await resolver.signup(validSignup, mockContext);
+          expect(callResolver.errors).toStrictEqual([
+            {
+              field: 'internal server error',
+              message: 'please check your console',
+            },
+          ]);
+          expect(callResolver.user).not.toBeDefined();
+        });
+      });
+    });
+    describe('works', () => {
+      const validSignup: SignupDto = {
+        email: 'andre@andre.com',
+        password: '1234Password',
+        name: 'Name with many chars',
+      };
+
+      const mockContext = createMock<GqlContext>({
+        req: {
+          session: {},
+        },
+        prisma: {
+          user: {
+            //fake context with an expected value returned
+            create: jest.fn().mockResolvedValue({
+              ...validSignup,
+              role: 'USER',
+              id: '123456789',
+            }),
+          },
+        },
+      });
+      it('works', async () => {
+        const callResolver = await resolver.signup(validSignup, mockContext);
+
+        expect(callResolver.errors).not.toBeDefined();
+        expect(callResolver.user).toStrictEqual({
+          ...validSignup,
+          role: 'USER',
+          id: '123456789',
+        });
+        expect(mockContext.req.session.userId).toBe('123456789');
+      });
+    });
+  });
+  describe('logout', () => {
+    describe('errors', () => {
+      describe('no user', () => {
+        it('no user and no cookie', async () => {
+          const mockCtx = createMock<GqlContext>({
+            req: {
+              session: {
+                userId: null,
+              },
+              headers: {
+                cookie: 'bla bla bla bla',
+              },
+            },
+            res: {
+              clearCookie: jest.fn(),
+            },
+          });
+          const calledResolver = await resolver.logout(mockCtx);
+          expect(calledResolver).toBe(false);
+          expect(mockCtx.res.clearCookie).not.toHaveBeenCalled();
+        });
+        it('no user but cookie', async () => {
+          const mockCtx = createMock<GqlContext>({
+            req: {
+              session: {
+                userId: null,
+              },
+              headers: {
+                cookie: COOKIE_NAME,
+              },
+            },
+            res: {
+              clearCookie: jest.fn(),
+            },
+          });
+          const calledResolver = await resolver.logout(mockCtx);
+          expect(mockCtx.res.clearCookie).toHaveBeenCalled();
+          expect(mockCtx.res.clearCookie).toHaveBeenCalledWith(COOKIE_NAME);
+          expect(calledResolver).toBe(false);
+        });
+      });
+
+      it('destroy error', async () => {
+        const mockCtx = createMock<GqlContext>({
+          req: {
+            session: {
+              userId: '123' as any,
+              destroy: jest
+                .fn()
+                .mockImplementation((fn) => fn(new Error('PROBLEMS'))) as any,
+            },
+            headers: {
+              cookie: COOKIE_NAME,
+            },
+          },
+          res: {
+            clearCookie: jest.fn(),
+          },
+        });
+        const calledResolver = await resolver.logout(mockCtx);
+        expect(calledResolver).toBe(false);
+      });
+    });
+    describe('logs out', () => {
+      const mockCtx = createMock<GqlContext>({
+        req: {
+          headers: {
+            cookie: COOKIE_NAME,
+          },
+          session: {
+            userId: '123' as any,
+            destroy: jest.fn().mockImplementation((fn) => fn()) as any,
+          },
+        },
+        res: {
+          clearCookie: jest.fn(),
+        },
+      });
+      it('works', async () => {
+        const callResolver = await resolver.logout(mockCtx);
+        expect(callResolver).toBe(true);
+        expect(mockCtx.res.clearCookie).toHaveBeenCalled();
+        expect(mockCtx.res.clearCookie).toHaveBeenCalledWith(COOKIE_NAME);
       });
     });
   });

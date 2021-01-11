@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { PrismaClient } from '@prisma/client';
 import { __isProd__ } from './isProd';
 

@@ -1,8 +1,10 @@
 import { UserResponse } from 'src/users/entity/user.entity';
+import { FieldError } from './base.response';
 import {
   returnBoolean,
   returnString,
   returnUserResponse,
+  returnFieldErrorArr,
 } from './utilDecorators';
 
 describe('returnsString', () => {
@@ -23,5 +25,11 @@ describe('returnsUserResponse', () => {
 describe('returnBoolean', () => {
   it('just works', () => {
     expect(returnBoolean()).toBe(Boolean);
+  });
+});
+
+describe('returnErrorFieldArr', () => {
+  it('just works', () => {
+    expect(returnFieldErrorArr()).toStrictEqual([FieldError]);
   });
 });
