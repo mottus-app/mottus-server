@@ -1,16 +1,26 @@
 import { ObjectType, Field } from '@nestjs/graphql';
-import { returnFieldErrorArr, returnString } from './utilDecorators';
+import { returnString } from './utilDecorators';
 
 @ObjectType()
 export class FieldError {
-  @Field(returnString)
+  @Field(
+    /* istanbul ignore next */
+    () => String,
+  )
   field: string;
-  @Field(returnString)
+  @Field(
+    /* istanbul ignore next */
+    () => String,
+  )
   message: string;
 }
 
 @ObjectType()
 export class BaseResponse {
-  @Field(returnFieldErrorArr, { nullable: true })
+  @Field(
+    /* istanbul ignore next */
+    () => [FieldError],
+    { nullable: true },
+  )
   errors?: FieldError[];
 }

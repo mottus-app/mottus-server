@@ -68,14 +68,12 @@ export class UsersService {
       context.req.session.userId = user.id;
       return { user };
     } catch (error) {
-      if (error.code === 'P2002' || error.message.includes('constraint')) {
-        if (error.message.includes('email')) {
-          return {
-            errors: [
-              { field: 'email', message: 'this email is already taken' },
-            ],
-          };
-        }
+      // if (error.code === 'P2002' || error.message.includes('constraint')) {
+
+      if (error.message.match(/constraint|email/gi)) {
+        return {
+          errors: [{ field: 'email', message: 'this email is already taken' }],
+        };
       }
       console.log('ERROR', error.message, error.code);
       return {
@@ -138,9 +136,12 @@ export class UsersService {
   }
 
   async logout({ req, res }: GqlContext) {
-    if (req.headers?.cookie?.includes(COOKIE_NAME)) {
-      res.clearCookie(COOKIE_NAME);
+    if (!req.headers?.cookie?.includes(COOKIE_NAME)) {
+      return false;
     }
+
+    res.clearCookie(COOKIE_NAME);
+
     if (!req.session.userId) {
       return false;
     }
@@ -148,7 +149,7 @@ export class UsersService {
     return new Promise((resolve) => {
       req.session.destroy((err) => {
         if (err) {
-          console.log('ERRORRRR', err?.message, err?.code);
+          console.log('ERRORRRR', err.message, err.code);
           return resolve(false);
         }
         resolve(true);
@@ -195,13 +196,16 @@ export class UsersService {
   }
   private loginValidation(loginDto: LogInDto): FieldError[] | false {
     const errors: FieldError[] = [];
-    if (typeof loginDto.password !== 'string' && !loginDto.password) {
+    if (typeof loginDto.password !== 'string' || !loginDto.password) {
       errors.push({
         field: 'password',
         message: 'Please write a password',
       });
     }
-    if (!validator.isEmail(loginDto.email)) {
+    if (
+      typeof loginDto.email !== 'string' ||
+      !validator.isEmail(loginDto.email)
+    ) {
       errors.push({
         field: 'email',
         message: 'Please write a valid email',

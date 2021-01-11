@@ -6,6 +6,8 @@ import { GqlContext } from 'src/utils/gqlContext';
 import { COOKIE_NAME } from 'src/utils/cookieName';
 import { User } from 'src/users/entity/user.entity';
 import { SignupDto } from './dto/signup.dto';
+import { genSalt, hash } from 'bcryptjs';
+import { LogInDto } from './dto/login.dto';
 
 // we pass the User resolver for testing
 let resolver: UsersResolver;
@@ -314,8 +316,39 @@ describe('UsersResolver', () => {
       });
     });
   });
-  describe('logout', () => {
+  describe('Logout', () => {
     describe('errors', () => {
+      describe('no cookie', () => {
+        it('returns false with no cookie', async () => {
+          const mockCtxNoReq = createMock<GqlContext>();
+          const callResolver = await resolver.logout(mockCtxNoReq);
+          expect(callResolver).toBe(false);
+          const mockCtxNoHeaders = createMock<GqlContext>({
+            req: {},
+          });
+          const callResolverNoH = await resolver.logout(mockCtxNoHeaders);
+          expect(callResolverNoH).toBe(false);
+          const mockCtxNoCookies = createMock<GqlContext>({
+            req: {
+              headers: {},
+            },
+          });
+          const callResolverNoC = await resolver.logout(mockCtxNoCookies);
+          expect(callResolverNoC).toBe(false);
+
+          const mockCtxNotCookieName = createMock<GqlContext>({
+            req: {
+              headers: {
+                cookie: '1234',
+              },
+            },
+          });
+          const callResolverNoCookieName = await resolver.logout(
+            mockCtxNotCookieName,
+          );
+          expect(callResolverNoCookieName).toBe(false);
+        });
+      });
       describe('no user', () => {
         it('no user and no cookie', async () => {
           const mockCtx = createMock<GqlContext>({
@@ -397,6 +430,114 @@ describe('UsersResolver', () => {
         expect(callResolver).toBe(true);
         expect(mockCtx.res.clearCookie).toHaveBeenCalled();
         expect(mockCtx.res.clearCookie).toHaveBeenCalledWith(COOKIE_NAME);
+      });
+    });
+  });
+
+  describe('Login', () => {
+    const input: LogInDto = {
+      email: 'andre@andre.com',
+      password: 'Password1234',
+    };
+    describe('error states', () => {
+      describe('input validation', () => {
+        const mockCtx = createMock<GqlContext>();
+
+        describe('bad email', () => {
+          const input: LogInDto = {
+            email: 'asd',
+            password: '123',
+          };
+          it('fails with not a good email', async () => {
+            const callResolver = await resolver.login(input, mockCtx);
+            expect(callResolver.user).not.toBeDefined();
+            expect(
+              callResolver.errors.find((e) => e.field === 'email'),
+            ).toBeDefined();
+          });
+        });
+        describe('general bad inputs', () => {
+          it('with array inputs', async () => {
+            const callResolver = await resolver.login(
+              {
+                // @ts-expect-error
+                email: [],
+                // @ts-expect-error
+                password: [],
+              },
+              mockCtx,
+            );
+            expect(callResolver.errors.length).toBeGreaterThan(1);
+          });
+        });
+      });
+
+      it('no user with email', async () => {
+        const mockCtx = createMock<GqlContext>({
+          prisma: {
+            user: {
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+          },
+        });
+        const callResolver = await resolver.login(input, mockCtx);
+        expect(callResolver.user).not.toBeDefined();
+        expect(callResolver.errors[0].field).toBe('email');
+      });
+
+      it('wrong password', async () => {
+        const mockCtx = createMock<GqlContext>({
+          prisma: {
+            user: {
+              findUnique: jest.fn().mockResolvedValue({ ...input, id: '123' }),
+            },
+          },
+        });
+
+        const callResolver = await resolver.login(input, mockCtx);
+        expect(callResolver.user).not.toBeDefined();
+        expect(callResolver.errors[0].field).toBe('credentials');
+      });
+
+      it('internal errors', async () => {
+        const mockCtx = createMock<GqlContext>({
+          prisma: {
+            user: {
+              findUnique: jest.fn().mockRejectedValue(new Error('Oppsie')),
+            },
+          },
+        });
+        const callResolver = await resolver.login(input, mockCtx);
+
+        expect(callResolver.user).not.toBeDefined();
+        expect(callResolver.errors[0].field).toMatch(/internal server error/gi);
+      });
+    });
+
+    describe('Success', () => {
+      it('works', async () => {
+        const hashPass = await hash(input.password, await genSalt());
+
+        const mockCtx = createMock<GqlContext>({
+          req: {
+            session: {},
+          },
+          prisma: {
+            user: {
+              findUnique: jest
+                .fn()
+                .mockResolvedValue({ ...input, password: hashPass, id: '123' }),
+            },
+          },
+        });
+        const callResolver = await resolver.login({ ...input }, mockCtx);
+        expect(callResolver.errors).not.toBeDefined();
+        expect(callResolver.user).toStrictEqual({
+          ...input,
+          password: hashPass,
+          id: '123',
+        });
+        expect(mockCtx.req.session.userId).toBe('123');
       });
     });
   });

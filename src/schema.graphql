@@ -29,6 +29,7 @@ type UserResponse {
 }
 
 type Query {
+  hello: String!
   me: UserResponse!
 }
 

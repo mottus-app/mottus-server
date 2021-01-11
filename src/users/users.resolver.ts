@@ -1,18 +1,19 @@
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GqlContext } from 'src/utils/gqlContext';
-import {
-  returnString,
-  returnUserResponse,
-  returnBoolean,
-} from 'src/utils/utilDecorators';
+import { returnString, returnUserResponse } from 'src/utils/utilDecorators';
 import { LogInDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
-import { User } from './entity/user.entity';
+import { User, UserResponse } from './entity/user.entity';
 import { UsersService } from './users.service';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
+
+  @Query(returnString)
+  hello() {
+    return `hello`;
+  }
 
   @Query(returnUserResponse)
   me(@Context() context: GqlContext) {
@@ -35,7 +36,7 @@ export class UsersResolver {
     return this.usersService.login(loginDto, context);
   }
 
-  @Mutation(returnBoolean)
+  @Mutation(() => Boolean)
   logout(@Context() context: GqlContext) {
     return this.usersService.logout(context);
   }
