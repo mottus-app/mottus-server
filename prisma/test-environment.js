@@ -1,8 +1,10 @@
+require('dotenv/config');
 const util = require('util');
 const NodeEnvironment = require('jest-environment-node');
 const { nanoid } = require('nanoid');
 const { PrismaClient } = require('@prisma/client');
 const exec = util.promisify(require('child_process').exec);
+return console.log(process.env);
 
 class PrismaTestEnvironment extends NodeEnvironment {
   constructor(config) {
