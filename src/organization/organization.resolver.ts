@@ -30,12 +30,6 @@ export class OrganizationResolver {
       .findUnique({ where: { id: org.id } })
       .owner();
     return owner;
-    console.log(
-      await context.prisma.organization
-        .findUnique({ where: { id: org.id } })
-        .owner(),
-    );
-    return context.userLoader.load(org.ownerId);
   }
 
   @ResolveField(() => [User])
@@ -48,12 +42,7 @@ export class OrganizationResolver {
 
     return context.prisma.organization
       .findUnique({ where: { id: org.id } })
-      .workers();
-  }
-
-  @Query(returnString)
-  hello() {
-    return `Hello`;
+      .workers({ take: 5 });
   }
 
   @Mutation(() => OrganizationResponse)

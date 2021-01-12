@@ -67,5 +67,7 @@ describe('User Module (e2e)', () => {
 
     expect(theCookie).toBeFalsy();
     expect(logoutB.data.logout).toBe(true);
+    const { body: logoutAtt2 } = await publicT(logoutMutation);
+    expect(logoutAtt2.data.logout).toBe(false);
   });
 });
