@@ -16,15 +16,23 @@ import { join } from 'path';
 import { prisma } from './utils/setPrisma';
 import { __isProd__ } from './utils/isProd';
 import { COOKIE_NAME } from './utils/cookieName';
+import { OrganizationModule } from './organization/organization.module';
+import { createUserDataLoader } from './utils/createUserDataLoader';
 @Module({
   imports: [
     GraphQLModule.forRoot({
       autoSchemaFile: join(process.cwd(), 'src', 'schema.graphql'),
       // so we can use our own cors
       cors: false,
-      context: ({ req, res }) => ({ req, res, prisma }),
+      context: ({ req, res }) => ({
+        req,
+        res,
+        prisma,
+        userLoader: createUserDataLoader(prisma),
+      }),
     }),
     UsersModule,
+    OrganizationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -47,9 +55,11 @@ export class AppModule implements NestModule {
           saveUninitialized: false,
           //make sure to have a session model in the prisma schema
           store: new PrismaSessionStore(prisma, {
-            checkPeriod: 2 * 60 * 1000, //ms
+            // checkPeriod: 2 * 1000 * 60,
             dbRecordIdIsSessionId: true,
-            dbRecordIdFunction: undefined,
+            // checkPeriod: 2 * 1000 * 60 * 60, //ms
+            // dbRecordIdIsSessionId: true,
+            // dbRecordIdFunction: undefined,
           }),
         }),
       )

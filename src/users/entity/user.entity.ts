@@ -28,6 +28,7 @@ export class User implements PrismaUser {
   email: string;
 
   password: string;
+
   @Field(() => Role)
   role: 'ADVERTISER' | 'USER';
 }

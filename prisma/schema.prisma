@@ -15,16 +15,6 @@ enum Role {
   USER
 }
 
-model Organization {
-  id         String     @id @default(uuid())
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  name       String     @unique
-  companyPic String?
-  worker     User[]
-  campaign   Campaign[]
-}
-
 model Session {
   id      String   @id
   sid     String   @unique
@@ -32,17 +22,30 @@ model Session {
   expires DateTime
 }
 
+model Organization {
+  id         String     @id @default(uuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  name       String     @unique
+  companyPic String?
+  workers    User[]     @relation("OrganizationWorkers")
+  owner      User       @relation("OwnerOrg", fields: [ownerId], references: [id])
+  ownerId    String
+  campaign   Campaign[]
+}
+
 model User {
-  id           String         @id @default(uuid())
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  name         String
-  profilePic   String?
-  email        String         @unique
-  password     String
-  role         Role
-  organization Organization[]
-  campaings    Campaign[]
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  name          String
+  profilePic    String?
+  email         String         @unique
+  password      String
+  role          Role
+  organizations Organization[] @relation("OrganizationWorkers")
+  campaings     Campaign[]
+  myOrgs        Organization[] @relation("OwnerOrg")
 }
 
 model Campaign {

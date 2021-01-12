@@ -28,15 +28,43 @@ type UserResponse {
   user: User
 }
 
+type Organization {
+  id: String!
+  createdAt: String!
+  updatedAt: String!
+  name: String!
+  companyPic: String
+  workers: [User!]!
+  owner: User!
+}
+
+type OrganizationResponse {
+  errors: [FieldError!]
+  organization: Organization
+}
+
+type OrganizationsResponse {
+  errors: [FieldError!]
+  organizations: [Organization!]
+}
+
+type AddToOrgResponse {
+  errors: [FieldError!]
+  worked: Boolean
+}
+
 type Query {
   hello: String!
   me: UserResponse!
+  getAllOrgs: OrganizationsResponse!
 }
 
 type Mutation {
   signup(signupOptions: SignupDto!): UserResponse!
   login(loginOptions: LogInDto!): UserResponse!
   logout: Boolean!
+  createOrganization(createOrganizationInput: CreateOrganizationDto!): OrganizationResponse!
+  addToOrg(addToOrgOptions: AddToOrgDto!): AddToOrgResponse!
 }
 
 input SignupDto {
@@ -49,4 +77,14 @@ input SignupDto {
 input LogInDto {
   password: String!
   email: String!
+}
+
+input CreateOrganizationDto {
+  name: String!
+  companyPic: String
+}
+
+input AddToOrgDto {
+  userIdToAdd: String!
+  orgId: String!
 }

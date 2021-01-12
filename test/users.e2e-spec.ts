@@ -2,15 +2,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-// import { LogInDto } from 'src/users/dto/login.dto';
+import { COOKIE_NAME } from 'src/utils/cookieName';
+import { getMeQuery, logoutMutation, signupMutation } from './utils';
 
 const GRAPHQL_ENDPOINT = '/graphql';
 
 describe('User Module (e2e)', () => {
   let app: INestApplication;
+  const base = () => request(app.getHttpServer()).post(GRAPHQL_ENDPOINT);
+  /**
+   *
+   * @param cookie the cookie that was received upon login
+   * @param query the query that we will send for the test
+   */
+  const privateTest = (cookie: string, query: string) =>
+    base().set('Cookie', cookie).send({ query });
+  const publicT = (query: string) => base().send({ query });
 
-  const baseTest = () => request(app.getHttpServer()).post(GRAPHQL_ENDPOINT);
-  const publicTest = (query: string) => baseTest().send({ query });
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -20,98 +28,44 @@ describe('User Module (e2e)', () => {
   });
 
   afterAll(async () => {
-    app.close();
+    await app.close();
   });
 
   describe('test', () => {
-    const baseTest = () =>
-      request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .set('Content-Type', 'application/json')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/);
-    const publicTest = (query: string) => baseTest().send({ query });
-    it('works', async () => {
-      const data = await publicTest(`query {hello}`).expect(200);
-      // console.log('data:', data.body);
-    });
-
     it('works to get user, when no session', async () => {
-      const { body } = await publicTest(
-        `query {me {errors {field message} user {id}}}`,
-      );
+      const { body } = await publicT(getMeQuery);
       expect(body.data.me.errors).toBeNull();
       expect(body.data.me.user).toBeNull();
     });
   });
 
-  it('logs in', async () => {
-    const { headers, body } = await publicTest(`mutation {
-      signup(
-        signupOptions: {
-          name: "andre"
-          password: "Password1234"
-          email: "email@example1.com"
-        }
-      ) {
-        errors {
-          field
-          message
-        }
-        user {
-          id
-        }
-      }
-    }
-    `);
-    console.log('headers', headers);
-    console.log(JSON.stringify(body, null, 4));
+  it('auth flow', async () => {
+    const { body, header } = await publicT(signupMutation);
+    const cookie = (header['set-cookie'] as string[]).find((c) =>
+      c.includes(COOKIE_NAME),
+    );
+
+    const data = await privateTest(cookie, getMeQuery)
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+    expect(data.body.data.me.user.id).toBeDefined();
+    expect(data.body.data.me.user.id).toBe(body.data.signup.user.id);
+
+    const { body: logoutB, headers: logoutHs } = await privateTest(
+      cookie,
+      logoutMutation,
+    );
+
+    const theCookieString = (logoutHs['set-cookie'] as string[]).find((el) =>
+      el.includes(COOKIE_NAME),
+    );
+
+    const theCookie = theCookieString
+      ?.replace(`${COOKIE_NAME}=`, '')
+      ?.split(';')[0];
+
+    expect(theCookie).toBeFalsy();
+    expect(logoutB.data.logout).toBe(true);
   });
 });
-// const GRAPHQL_ENDPOINT = '/graphql';
-// const testUser: LogInDto = {
-//   email: 'validEmail@gmail.com',
-//   password: 'Passowrd1234.',
-// };
-// describe('AppController (e2e)', () => {
-//   let app: INestApplication;
-//   const baseTest = () => request(app.getHttpServer()).post(GRAPHQL_ENDPOINT);
-//   const publicTest = (query: string) => baseTest().send({ query });
-
-//   beforeAll(async () => {
-//     const moduleFixture: TestingModule = await Test.createTestingModule({
-//       imports: [AppModule],
-//     }).compile();
-//     app = moduleFixture.createNestApplication();
-
-//     await app.init();
-//   });
-
-//   afterAll(async () => {
-//     await app.close();
-//   });
-
-//   beforeEach(async () => {
-//     const moduleFixture: TestingModule = await Test.createTestingModule({
-//       imports: [AppModule],
-//     }).compile();
-
-//     app = moduleFixture.createNestApplication();
-//     // await app.init();
-//   });
-
-//   describe('get Hello', () => {
-//     it('should get back `hello`', async () => {
-//       const data = await publicTest(`
-//       query {hello }`);
-//       console.log('data:', data);
-//     });
-//   });
-
-//   it('/ (GET)', () => {
-//     return request(app.getHttpServer())
-//       .get('/')
-//       .expect(200)
-//       .expect('Hello World!');
-//   });
-// });

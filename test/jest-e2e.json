@@ -17,7 +17,7 @@
   },
   "coverageReporters": ["json", "text", "lcov"],
   "coverageDirectory": "coverage/e2e",
-  "collectCoverage": true,
+  "collectCoverage": false,
   "collectCoverageFrom": ["src/**"],
   "coveragePathIgnorePatterns": [".module.ts$", ".spec.ts$", ".entity.ts$"],
   "testEnvironment": "<rootDir>/prisma/test-environment.js",

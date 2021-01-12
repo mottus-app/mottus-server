@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { createUserDataLoader } from './createUserDataLoader';
 
 // export type MySession = Session & Partial<SessionData> & { userId: string };
 // import { Request, Response } from "express";
@@ -27,4 +28,5 @@ export interface GqlContext {
   prisma: PrismaClient;
   req: CustomRequest;
   res: Response;
+  userLoader: ReturnType<typeof createUserDataLoader>;
 }
