@@ -19,7 +19,11 @@ import {
   OrganizationsResponse,
 } from './entity/organization.entity';
 import { OrganizationService } from './organization.service';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { IsLogged } from 'src/shared/is-logged.guard';
 
 @Resolver(() => Organization)
@@ -28,7 +32,7 @@ export class OrganizationResolver {
 
   @ResolveField(() => User)
   async owner(@Root() org: Organization, @Context() context: GqlContext) {
-    throw new UnauthorizedException('Bad in owner');
+    throw new ForbiddenException('Bad in owner');
 
     const owner = await context.prisma.organization
       .findUnique({ where: { id: org.id } })

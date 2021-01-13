@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import * as session from 'express-session';
+import { GraphQLError } from 'graphql';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,7 +10,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { UsersModule } from './users/users.module';
 import { COOKIE_NAME } from './utils/cookieName';
 import { createUserDataLoader } from './utils/createUserDataLoader';
-import { validateError } from './utils/errorValidation';
+import { ExtendedError, validateError } from './utils/errorValidation';
 import { __isProd__ } from './utils/isProd';
 import { prisma } from './utils/setPrisma';
 
@@ -26,14 +27,14 @@ import { prisma } from './utils/setPrisma';
         userLoader: createUserDataLoader(prisma),
       }),
       formatError: (err) => {
-        console.log('err:', err?.originalError);
-        const errors = validateError(err);
+        const errors = validateError(err as ExtendedError);
         console.log('errors:', errors);
+        //   console.log('errors:', errors);
         if (errors) {
-          return errors;
+          return { mottusErrors: errors, ...err };
         }
-
-        return err;
+        // return {custom:{field:"message"}}
+        return { mottusErrors: [], ...err };
       },
     }),
     UsersModule,
