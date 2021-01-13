@@ -31,7 +31,12 @@ export function validateError(err: ExtendedError) {
   }
   const isAuth = checkAuthError(err);
   if (isAuth) {
-    return [{ field: 'auth', message: 'not authenticated' }];
+    return [
+      {
+        field: 'auth',
+        message: exceptionThrown.response.message || exceptionThrown.message,
+      },
+    ];
   }
 }
 

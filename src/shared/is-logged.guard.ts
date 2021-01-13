@@ -14,7 +14,6 @@ export class IsLoggedGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    throw new UnauthorizedException('Not authenticated');
     const ctx = GqlExecutionContext.create(context);
     const myContext: GqlContext = ctx.getContext();
     console.log('req:', Object.keys(myContext));

@@ -28,7 +28,6 @@ import { prisma } from './utils/setPrisma';
       }),
       formatError: (err) => {
         const errors = validateError(err as ExtendedError);
-        console.log('errors:', errors);
         //   console.log('errors:', errors);
         if (errors) {
           return { mottusErrors: errors, ...err };
