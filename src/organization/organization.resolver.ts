@@ -19,6 +19,8 @@ import {
   OrganizationsResponse,
 } from './entity/organization.entity';
 import { OrganizationService } from './organization.service';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { IsLogged } from 'src/shared/is-logged.guard';
 
 @Resolver(() => Organization)
 export class OrganizationResolver {
@@ -26,6 +28,8 @@ export class OrganizationResolver {
 
   @ResolveField(() => User)
   async owner(@Root() org: Organization, @Context() context: GqlContext) {
+    throw new UnauthorizedException('Bad in owner');
+
     const owner = await context.prisma.organization
       .findUnique({ where: { id: org.id } })
       .owner();
@@ -40,6 +44,7 @@ export class OrganizationResolver {
     //      .workers(),
     //  );
 
+    throw new UnauthorizedException('Bad in workers');
     return context.prisma.organization
       .findUnique({ where: { id: org.id } })
       .workers({ take: 5 });
@@ -55,6 +60,7 @@ export class OrganizationResolver {
   }
 
   @Query(() => OrganizationsResponse)
+  // @IsLogged()
   getAllOrgs(@Context() context: GqlContext) {
     return this.orgService.getAllOrgs(context);
   }

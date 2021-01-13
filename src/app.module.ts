@@ -1,23 +1,17 @@
-import {
-  Injectable,
-  MiddlewareConsumer,
-  Module,
-  NestMiddleware,
-  NestModule,
-} from '@nestjs/common';
-import * as session from 'express-session';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
-
+import * as session from 'express-session';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { GraphQLModule } from '@nestjs/graphql';
-import { join } from 'path';
-import { prisma } from './utils/setPrisma';
-import { __isProd__ } from './utils/isProd';
-import { COOKIE_NAME } from './utils/cookieName';
 import { OrganizationModule } from './organization/organization.module';
+import { UsersModule } from './users/users.module';
+import { COOKIE_NAME } from './utils/cookieName';
 import { createUserDataLoader } from './utils/createUserDataLoader';
+import { __isProd__ } from './utils/isProd';
+import { prisma } from './utils/setPrisma';
+
 @Module({
   imports: [
     GraphQLModule.forRoot({
@@ -30,6 +24,23 @@ import { createUserDataLoader } from './utils/createUserDataLoader';
         prisma,
         userLoader: createUserDataLoader(prisma),
       }),
+      formatError: (err) => {
+        // console.log('err:', err);
+        // return
+        // const res = err.extensions?.exception?.response;
+        // const isAuthError = res?.statusCode === 401 || res?.statusCode === 403;
+        // // console.log('isAuthError:', isAuthError);
+        // if (isAuthError) {
+        //   return {
+        //     field: 'auth',
+        //     message: 'you are not authorized',
+        //   };
+        // }
+        // const field:
+        // console.log('err:', err);
+        // return err.extensions?.exception?.response;
+        return err;
+      },
     }),
     UsersModule,
     OrganizationModule,

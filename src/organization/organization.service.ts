@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { GqlContext } from 'src/utils/gqlContext';
 import { AddToOrgDto } from './dto/add-to-org.dto';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -62,6 +62,7 @@ export class OrganizationService {
   }
 
   async getAllOrgs({ prisma }: GqlContext) {
+    // throw new UnauthorizedException('DUMB FUCK');
     const organizations = await prisma.organization.findMany({
       // include: { workers: true },
     });

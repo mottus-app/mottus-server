@@ -1,4 +1,5 @@
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { IsLogged } from 'src/shared/is-logged.guard';
 import { GqlContext } from 'src/utils/gqlContext';
 import { returnString, returnUserResponse } from 'src/utils/utilDecorators';
 import { LogInDto } from './dto/login.dto';
@@ -16,6 +17,7 @@ export class UsersResolver {
   }
 
   @Query(returnUserResponse)
+  @IsLogged()
   me(@Context() context: GqlContext) {
     return this.usersService.getMe(context);
   }
