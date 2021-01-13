@@ -9,6 +9,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { UsersModule } from './users/users.module';
 import { COOKIE_NAME } from './utils/cookieName';
 import { createUserDataLoader } from './utils/createUserDataLoader';
+import { validateError } from './utils/errorValidation';
 import { __isProd__ } from './utils/isProd';
 import { prisma } from './utils/setPrisma';
 
@@ -25,20 +26,13 @@ import { prisma } from './utils/setPrisma';
         userLoader: createUserDataLoader(prisma),
       }),
       formatError: (err) => {
-        // console.log('err:', err);
-        // return
-        // const res = err.extensions?.exception?.response;
-        // const isAuthError = res?.statusCode === 401 || res?.statusCode === 403;
-        // // console.log('isAuthError:', isAuthError);
-        // if (isAuthError) {
-        //   return {
-        //     field: 'auth',
-        //     message: 'you are not authorized',
-        //   };
-        // }
-        // const field:
-        // console.log('err:', err);
-        // return err.extensions?.exception?.response;
+        console.log('err:', err?.originalError);
+        const errors = validateError(err);
+        console.log('errors:', errors);
+        if (errors) {
+          return errors;
+        }
+
         return err;
       },
     }),
