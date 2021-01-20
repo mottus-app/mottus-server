@@ -44,7 +44,7 @@ describe('UsersResolver', () => {
           },
           req: {
             session: {
-              userId: '123' as any,
+              userId: '123',
             },
           },
           prisma: {
